@@ -363,8 +363,8 @@ void Thread::search() {
           beta  = std::min(prev + delta, VALUE_INFINITE);
 
           // Adjust optimism based on root move's previousScore
-          int opt = 109 * prev / (std::abs(prev) + 141);
-          optimism[ us] = Value(opt);
+          int opt = prev * int(PawnValue) / (std::abs(prev) + 141);
+          optimism[ us] = Value(opt >> 1);
           optimism[~us] = -optimism[us];
 
           // Start with a small aspiration window and, in the case of a fail
@@ -901,7 +901,7 @@ namespace {
 moves_loop: // When in check, search starts here
 
     // Step 12. A small Probcut idea, when we are in check (~4 Elo)
-    probCutBeta = beta + 413;
+    probCutBeta = beta + PawnValue * 2;
     if (   ss->inCheck
         && !PvNode
         && ttCapture
@@ -994,12 +994,12 @@ moves_loop: // When in check, search starts here
               if (   !givesCheck
                   && lmrDepth < 7
                   && !ss->inCheck
-                  && ss->staticEval + 197 + 248 * lmrDepth + PieceValue[pos.piece_on(to_sq(move))]
+                  && ss->staticEval + PawnValue + 248 * lmrDepth + PieceValue[pos.piece_on(to_sq(move))]
                    + captureHistory[movedPiece][to_sq(move)][type_of(pos.piece_on(to_sq(move)))] / 7 < alpha)
                   continue;
 
               // SEE based pruning for captures and checks (~11 Elo)
-              if (!pos.see_ge(move, Value(-205) * depth))
+              if (!pos.see_ge(move, Value(-PawnValue) * depth))
                   continue;
           }
           else
@@ -1575,7 +1575,7 @@ moves_loop: // When in check, search starts here
                 continue;
 
             // Do not search moves with bad enough SEE values (~5 Elo)
-            if (!pos.see_ge(move, Value(-95)))
+            if (!pos.see_ge(move, Value(-PawnValue/2)))
                 continue;
         }
 
